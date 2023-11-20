@@ -1,0 +1,99 @@
+.dseg
+
+.org 0x150
+
+VMEM: .byte 96 
+CHECK_JUMP: .byte 1
+CHECK_ROCK: .byte 1
+
+.cseg
+
+	
+		
+VMEM_INIT: // Förbereder pekaren
+
+		ldi		ZH, HIGH(VMEM)
+		ldi		ZL, LOW(VMEM)
+
+		ldi		YH,HIGH(VMEM)
+		ldi		YL,LOW(VMEM)
+		ret
+
+SRAM_CLEAR:
+
+		push	r17
+		push	r18
+		push	ZH
+		push	ZL
+		ldi		r17, 150
+		ldi		r18, $00
+		ldi		ZH, HIGH(VMEM)
+		ldi		ZL, LOW(VMEM) 
+	
+SRAMCLEARLOOP:
+
+		dec r17
+		st  Z+, r18
+		cpi r17, 0
+		brne SRAMCLEARLOOP
+		pop	ZL
+		pop ZH
+
+		pop r17
+		pop r18
+
+		ret 
+
+
+
+CLEAR_SCREEN:
+
+		ldi r18, 72
+
+SCREEN_LOOP:
+
+		ldi r16,$00
+		dec r18
+		cpi r18,0
+//		call SEND_MATRIX
+		call SPI_TRANSMIT
+		brne SCREEN_LOOP
+//		call SPI_SEND
+		ret
+
+
+
+
+
+ROCK:		//lägger rätt anod data i var 4 byte 
+
+		ldi r25,0b00000011
+
+ROCK_MOVE:
+		
+		ldi YL, $98
+		call LOAD_ROCK
+
+ROCK_STEP:
+
+		inc r28
+		inc r24
+		cpi r24,10
+		brne ROCK_STEP
+		call LOAD_ROCK
+		clr r24
+		inc r17
+		lsl r25
+		cpi r17,8
+		brne ROCK_MOVE
+
+		ret
+
+
+LOAD_ROCK:			// var r18 förut 
+		st		Y, r25
+		inc		r28
+		st		Y,r25
+		inc		r28
+		st		Y, r25
+		ret
